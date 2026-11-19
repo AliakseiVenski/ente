@@ -32,6 +32,73 @@ import 'package:photos/utils/dialog_util.dart';
 import 'package:photos/utils/image_util.dart';
 import "package:photos/utils/ram_check_util.dart";
 
+// Same size key as ZoomableImage uses, so a preload is an ImageCache hit there.
+//
+// The caller must not call this for images that already fit the screen — the
+// resize target clamps to the original size anyway, so the decode would only
+// duplicate the full-image one under a different cache key.
+ResizeImage screenSizedImage(BuildContext context, File file) {
+  final screen =
+      MediaQuery.sizeOf(context) * MediaQuery.devicePixelRatioOf(context);
+  return ResizeImage(
+    FileImage(file),
+    width: screen.width.round(),
+    height: screen.height.round(),
+    policy: ResizeImagePolicy.fit,
+  );
+}
+
+Future<void> preloadScreenSizedImage(
+  BuildContext context,
+  EnteFile file,
+) async {
+  final name = file.displayName.toLowerCase();
+  if (file.isVideo ||
+      file.isRemoteOnlyFile ||
+      file.isDeviceTrash ||
+      (Platform.isIOS && name.endsWith('.gif')) ||
+      (Platform.isAndroid &&
+          (name.endsWith('.heic') || name.endsWith('.heif')))) {
+    return;
+  }
+  if (file.hasDimensions) {
+    final screen = MediaQuery.sizeOf(context) *
+        MediaQuery.devicePixelRatioOf(context);
+    if (file.width <= screen.width && file.height <= screen.height) {
+      return;
+    }
+  }
+  final f = await getFile(file);
+  if (f == null || !context.mounted) return;
+  await precacheImage(
+    screenSizedImage(context, f),
+    context,
+    onError: (_, _) {},
+  );
+}
+
+Future<void> preloadFullImage(BuildContext context, EnteFile file) async {
+  final name = file.displayName.toLowerCase();
+  final maxPixels = hasLessThan5GBRAM
+      ? _ZoomableImageState._lowRamMaxPixels
+      : _ZoomableImageState._defaultMaxPixels;
+  if (file.isVideo ||
+      file.isRemoteOnlyFile ||
+      file.isDeviceTrash ||
+      (Platform.isIOS && name.endsWith('.gif')) ||
+      !file.hasDimensions ||
+      file.width * file.height > maxPixels ||
+      file.width * file.height * 4 >
+          PaintingBinding.instance.imageCache.maximumSizeBytes ||
+      (Platform.isAndroid &&
+          (name.endsWith('.heic') || name.endsWith('.heif')))) {
+    return;
+  }
+  final f = await getFile(file);
+  if (f == null || !context.mounted) return;
+  await precacheImage(FileImage(f), context, onError: (_, _) {});
+}
+
 class ZoomableImage extends StatefulWidget {
   final EnteFile photo;
   final Function(bool)? shouldDisableScroll;
@@ -437,7 +504,7 @@ class _ZoomableImageState extends State<ZoomableImage> {
   ) {
     if (mounted && !_loadedFinalImage) {
       precacheImage(imageProvider, context).then((value) {
-        if (mounted && !_loadedFinalImage) {
+        if (mounted && !_loadedFinalImage && !_loadedLargeThumbnail) {
           setState(() {
             _imageProvider = imageProvider;
             _loadedLargeThumbnail = true;
@@ -493,7 +560,37 @@ class _ZoomableImageState extends State<ZoomableImage> {
     }
   }
 
+  void _loadScreenSizedPreview(File file) {
+    final imageCache = PaintingBinding.instance.imageCache;
+    if (imageCache.statusForKey(FileImage(file)).keepAlive) {
+      return;
+    }
+    if (_photo.hasDimensions) {
+      final screen = MediaQuery.sizeOf(context) *
+          MediaQuery.devicePixelRatioOf(context);
+      if (_photo.width <= screen.width && _photo.height <= screen.height) {
+        return;
+      }
+    }
+    final provider = screenSizedImage(context, file);
+    var failed = false;
+    precacheImage(
+      provider,
+      context,
+      onError: (_, _) => failed = true,
+    ).then((_) {
+      if (mounted && !failed && !_loadedFinalImage) {
+        setState(() {
+          _imageProvider = provider;
+          _loadedLargeThumbnail = true;
+        });
+        _notifyReadyOnce();
+      }
+    });
+  }
+
   void _loadWithPlatformDecoder(File file) {
+    if (mounted) _loadScreenSizedPreview(file);
     ImageProvider imageProvider;
     if (isTooLargeImage) {
       _logger.info(
