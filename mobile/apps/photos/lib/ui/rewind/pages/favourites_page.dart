@@ -30,7 +30,8 @@ _Pose _lerp(_Pose a, _Pose b, double t) => (
   opacity: lerpDouble(a.opacity, b.opacity, t)!,
 );
 
-const _line = "Memories to be grateful for!";
+const _line = "Memories to cherish.";
+const _sharedLine = "A memory to cherish.";
 const _titleRect = Rect.fromLTWH(28, 664, 334, 40);
 const _lineRect = Rect.fromLTWH(28, 718, 334, 22);
 const _sparkleAt = Offset(38.9, 110.9);
@@ -71,9 +72,6 @@ class FavouritesPage extends RewindPage {
 
   @override
   Duration? get reelHold => const Duration(milliseconds: 7100);
-
-  @override
-  Duration? get clipHold => reelHold;
 
   @override
   Widget build(
@@ -342,13 +340,11 @@ class _FavouritesState extends State<_Favourites> {
                     position: position,
                     active: isActive,
                     delayMs: 1600,
-                    child: capturing
-                        ? const SizedBox.shrink()
-                        : Text(
-                            _line,
-                            textAlign: TextAlign.center,
-                            style: RewindTextStyles.body(17),
-                          ),
+                    child: Text(
+                      capturing ? _sharedLine : _line,
+                      textAlign: TextAlign.center,
+                      style: RewindTextStyles.body(17),
+                    ),
                   ),
                 ],
               ),

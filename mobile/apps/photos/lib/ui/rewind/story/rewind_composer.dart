@@ -1,10 +1,8 @@
 import "dart:async";
 
-import "package:flutter/painting.dart" show Offset;
 import "package:flutter_rust_bridge/flutter_rust_bridge.dart" show Int64List;
 import "package:photos/models/file/file.dart";
 import "package:photos/src/rust/api/rewind_api.dart" as rust;
-import "package:photos/ui/rewind/pages/art_twin_page.dart";
 import "package:photos/ui/rewind/pages/badge_reveal_page.dart";
 import "package:photos/ui/rewind/pages/busiest_day_page.dart";
 import "package:photos/ui/rewind/pages/colour_page.dart";
@@ -23,7 +21,6 @@ import "package:photos/ui/rewind/pages/ritual_streak_page.dart";
 import "package:photos/ui/rewind/pages/scrapbook_page.dart";
 import "package:photos/ui/rewind/pages/setup_page.dart";
 import "package:photos/ui/rewind/pages/setup_pages.dart";
-import "package:photos/ui/rewind/pages/timelapse_page.dart";
 import "package:photos/ui/rewind/pages/top_percent_page.dart";
 import "package:photos/ui/rewind/pages/warp_page.dart";
 import "package:photos/ui/rewind/pages/weekly_habit_page.dart";
@@ -56,12 +53,11 @@ List<RewindChapter> rewindChapters(
   RewindChapter([const CoverPage().key], (_) async => const [CoverPage()]),
   _warp(report),
   _totals(report.totals),
-  _colour(report.colour),
   _places(report.places, report.globe),
   _peopleRace(report.peopleRace),
-  _timelapse(report),
   _busiestDay(report.busiestDay),
   _newFaces(report.newFaces),
+  _colour(report.colour),
   _favourites(report.favourites),
   _weeklyHabit(report.weeklyHabit),
   _crowdFavourite(report.crowdFavourite),
@@ -69,7 +65,7 @@ List<RewindChapter> rewindChapters(
   _mosaic(report),
   _badge(report.badge),
   _scrapbook(report),
-  _finale(report),
+  _finale(),
 ];
 
 List<RewindChapter> rewindPhotoCardChapters(rust.RewindReport report) => [
@@ -77,13 +73,11 @@ List<RewindChapter> rewindPhotoCardChapters(rust.RewindReport report) => [
   RewindChapter([
     GlobePage.pageKey,
   ], (media) async => [?_globe(media, report.globe)]),
-  _timelapse(report),
   _mosaic(report),
 ];
 
 const _quizCities = 6;
 const _podiumPlaces = 3;
-const _stampsPerPlace = 3;
 const _galleryPhotos = 9;
 const _boothStrips = 3;
 const _newFaceBubbles = 6;
@@ -92,15 +86,12 @@ const _minimumNewFaces = 1;
 
 RewindChapter _totals(rust.Totals? totals) {
   return RewindChapter([PhotosCountPage.pageKey, TopPercentPage.pageKey], (
-    media,
+    _,
   ) async {
     if (totals == null) return const [];
     final top = totals.topPercent;
     return [
-      PhotosCountPage(
-        totals.files,
-        media.glimpses(totals.fileIds, PhotosCountPage.maxPhotos),
-      ),
+      PhotosCountPage(totals.files),
       if (top != null) TopPercentPage(percent: top, count: totals.files),
     ];
   });
@@ -114,7 +105,7 @@ RewindChapter _warp(rust.RewindReport report) =>
       final panels = media.extraPhotos(
         warp.fileIds,
         warp.fileIds.length,
-        preloadRemote: true,
+        preload: true,
       );
       if (first == null || panels.length < WarpPage.minimumPanels) {
         return const [];
@@ -129,34 +120,11 @@ GlobePage? _globe(RewindMedia media, rust.Globe? globe) => globe == null
           media.photos(place.fileIds, 1).firstOrNull,
       ]);
 
-RewindChapter _timelapse(rust.RewindReport report) =>
-    RewindChapter([TimelapsePage.pageKey], (media) async {
-      final lapse = report.timelapse;
-      if (lapse == null) return const [];
-      final frames = <RewindLapseFrame>[
-        for (final frame in lapse.frames)
-          if (_file(media, frame.fileId) case final file?)
-            (
-              file: file,
-              month: frame.month,
-              day: frame.day,
-              leftEye: Offset(frame.leftEyeX / 1e5, frame.leftEyeY / 1e5),
-              rightEye: Offset(frame.rightEyeX / 1e5, frame.rightEyeY / 1e5),
-            ),
-      ];
-      final name = lapse.isMe ? null : media.personName(lapse.personId);
-      if (frames.length < TimelapsePage.minimumFrames ||
-          (!lapse.isMe && name == null)) {
-        return const [];
-      }
-      return [TimelapsePage(frames: frames, name: name)];
-    });
-
 EnteFile? _file(RewindMedia media, int fileId) =>
     media.extraPhotos(Int64List.fromList([fileId]), 1).firstOrNull;
 
 RewindChapter _mosaic(rust.RewindReport report) =>
-    RewindChapter([MosaicPage.pageKey], (media) async {
+    RewindChapter([mosaicSetupPage.key, MosaicPage.pageKey], (media) async {
       final mosaic = report.mosaic;
       if (mosaic == null) return const [];
       final files = media.extraPhotos(mosaic.fileIds, mosaic.fileIds.length);
@@ -177,27 +145,29 @@ RewindChapter _mosaic(rust.RewindReport report) =>
           await media.cluster(id, mosaic.clusterFaceIds),
         _ => null,
       };
+      final (subject, subjectName) = switch ((
+        me?.crop,
+        favourite?.crop,
+        familiar?.crop,
+      )) {
+        (final crop?, _, _) => (crop, null),
+        (_, final crop?, _) => (crop, favourite?.name),
+        (_, _, final crop?) => (crop, MosaicPage.familiarFace),
+        _ => (null, null),
+      };
       return [
-        MosaicPage(
-          files: files,
-          subject: me?.crop ?? favourite?.crop ?? familiar?.crop,
-        ),
+        mosaicSetupPage,
+        MosaicPage(files: files, subject: subject, subjectName: subjectName),
       ];
     });
 
-RewindChapter _colour(rust.ColourOfTheYear? colour) => RewindChapter(
-  [paletteSetupPage.key, ColourPage.pageKey, ArtTwinPage.pageKey],
-  (media) async {
-    if (colour == null) return const [];
-    final photos = media.photos(colour.fileIds, 9);
-    if (photos.isEmpty) return const [];
-    return [
-      paletteSetupPage,
-      ColourPage(colour, photos),
-      ArtTwinPage(colour.colour),
-    ];
-  },
-);
+RewindChapter _colour(rust.ColourOfTheYear? colour) =>
+    RewindChapter([paletteSetupPage.key, ColourPage.pageKey], (media) async {
+      if (colour == null) return const [];
+      final photos = media.photos(colour.fileIds, 9);
+      if (photos.isEmpty) return const [];
+      return [paletteSetupPage, ColourPage(colour, photos)];
+    });
 
 RewindChapter _places(rust.Places? places, rust.Globe? globe) => RewindChapter(
   [placesSetupPage.key, GlobePage.pageKey, PlacesQuizPage.pageKey],
@@ -224,14 +194,10 @@ PlacesQuizPage? _placesQuiz(
 }
 
 PlaceStamp _placeStamp(RewindMedia media, rust.RewindCity city, bool podium) {
-  final picked = media.photos(city.fileIds, podium ? _stampsPerPlace : 1);
   return (
     city: city,
-    photo: picked.firstOrNull,
-    extras: picked.skip(1).toList(),
-    gallery: podium
-        ? media.extraPhotos(city.fileIds, _galleryPhotos)
-        : const [],
+    photo: media.photos(city.fileIds, 1).firstOrNull,
+    gallery: podium ? media.gallery(city.fileIds, _galleryPhotos) : const [],
   );
 }
 
@@ -313,10 +279,7 @@ Future<NewFaceBubble?> _newFace(RewindMedia media, rust.NewFace newFace) async {
     _ => null,
   };
   if (face?.crop == null) return null;
-  return (
-    face: face!,
-    photos: media.extraPhotos(newFace.fileIds, _newFacePhotos),
-  );
+  return (face: face!, photos: media.gallery(newFace.fileIds, _newFacePhotos));
 }
 
 RewindChapter _favourites(rust.Favourites? favourites) {
@@ -383,16 +346,6 @@ RewindChapter _scrapbook(rust.RewindReport report) {
   });
 }
 
-RewindChapter _finale(rust.RewindReport report) =>
-    RewindChapter(const [FinalePage.pageKey], (media) async {
-      final photos = Set<EnteFile>.identity();
-      for (final ids in [
-        report.finale?.fileIds,
-        report.scrapbook?.fileIds,
-        report.totals?.fileIds,
-      ]) {
-        if (ids == null || photos.length >= FinalePage.photoCount) continue;
-        photos.addAll(media.glimpses(ids, FinalePage.photoCount));
-      }
-      return [FinalePage(photos.take(FinalePage.photoCount).toList())];
-    });
+RewindChapter _finale() => RewindChapter(const [
+  FinalePage.pageKey,
+], (media) async => const [FinalePage()]);

@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	b64 "encoding/base64"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -314,7 +316,6 @@ func main() {
 	commentsController := &socialcontroller.CommentsController{
 		Repo:           commentsRepo,
 		CollectionRepo: collectionRepo,
-		FileRepo:       fileRepo,
 		AccessCtrl:     accessCtrl,
 		PushCtrl:       pushController,
 	}
@@ -322,7 +323,6 @@ func main() {
 		Repo:           reactionsRepo,
 		CommentsRepo:   commentsRepo,
 		CollectionRepo: collectionRepo,
-		FileRepo:       fileRepo,
 		AccessCtrl:     accessCtrl,
 		PushCtrl:       pushController,
 	}
@@ -717,6 +717,7 @@ func main() {
 	privateAPI.POST("/users/two-factor/disable", userHandler.DisableTwoFactor)
 	privateAPI.PUT("/users/attributes", userHandler.SetAttributes)
 	privateAPI.PUT("/users/email-mfa", userHandler.UpdateEmailMFA)
+	privateAPI.PUT("/users/source", userHandler.SetSource)
 	privateAPI.POST("/users/srp/setup", userHandler.SetupSRP)
 	privateAPI.POST("/users/srp/complete", userHandler.CompleteSRPSetup)
 	privateAPI.POST("/users/srp/update", userHandler.UpdateSrpAndKeyAttributes)
@@ -971,7 +972,6 @@ func main() {
 	privateAPI.POST("/storage-bonus/referral-claim", storageBonusHandler.ClaimReferral)
 
 	adminHandler := &api.AdminHandler{
-		QueueRepo:              queueRepo,
 		UserRepo:               userRepo,
 		CollectionRepo:         collectionRepo,
 		AuthenticatorRepo:      authRepo,
@@ -1015,7 +1015,6 @@ func main() {
 	adminAPI.GET("/email-hash", adminHandler.GetEmailHash)
 	adminAPI.POST("/emails-from-hashes", adminHandler.GetEmailsFromHashes)
 	adminAPI.PUT("/user/subscription", adminHandler.UpdateSubscription)
-	adminAPI.POST("/queue/re-queue", adminHandler.ReQueueItem)
 	adminAPI.POST("/collection/repair-deleted-share", adminHandler.RepairDeletedCollectionShare)
 	adminAPI.POST("/user/init-file-counts", adminHandler.InitializeFileCounts)
 	adminAPI.POST("/user/bonus", adminHandler.UpdateBonus)
@@ -1201,7 +1200,7 @@ func runServer(server *gin.Engine) *http.Server {
 		if server.TrustedPlatform != "" {
 			log.Infof("trusted platform header: %s", server.TrustedPlatform)
 		}
-		httpServer.Addr = fmt.Sprintf(":%d", port)
+		httpServer.Addr = net.JoinHostPort(viper.GetString("http.host"), strconv.Itoa(port))
 		go func() {
 			if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
 				log.Error(err)

@@ -4,6 +4,7 @@ import "package:flutter/material.dart";
 import "package:photos/src/rust/api/rewind_api.dart" as rust;
 import "package:photos/ui/rewind/shell/rewind_page.dart";
 import "package:photos/ui/rewind/shell/rewind_share.dart";
+import "package:photos/ui/rewind/theme/rewind_assets.dart";
 import "package:photos/ui/rewind/theme/rewind_colors.dart";
 import "package:photos/ui/rewind/theme/rewind_motion.dart";
 import "package:photos/ui/rewind/theme/rewind_text_styles.dart";
@@ -11,6 +12,8 @@ import "package:photos/ui/rewind/widgets/rewind_backdrop.dart";
 import "package:photos/ui/rewind/widgets/rewind_entrance.dart";
 import "package:photos/ui/rewind/widgets/rewind_rive.dart";
 import "package:photos/ui/rewind/widgets/rewind_stage.dart";
+import "package:photos/ui/rewind/widgets/rewind_svg.dart";
+import "package:photos/ui/rewind/widgets/rewind_text.dart";
 
 typedef _BadgeCopy = ({String title, String pronunciation, String definition});
 
@@ -19,147 +22,151 @@ _BadgeCopy _copyOf(rust.RewindBadge badge) => switch (badge) {
     title: "SUN CHASER",
     pronunciation: "/ˈsən ˌchā-sər/",
     definition:
-        "A person who regularly photographs sunrises, sunsets, and golden-hour light.",
+        "Someone who drops everything the second the sky turns pink. Golden hour is their love language.",
   ),
   rust.RewindBadge.consistencyChamp => (
     title: "CONSISTENCY\nCHAMP",
     pronunciation: "/kən-ˈsis-tən-sē champ/",
-    definition: "A person who takes photos consistently throughout the year.",
+    definition:
+        "Someone who showed up for their camera roll every single month. Rain, shine or Tuesday.",
   ),
   rust.RewindBadge.unpaidPhotographer => (
     title: "UNPAID\nPHOTOGRAPHER",
     pronunciation: "/ən-ˈpād fə-ˈtä-grə-fər/",
     definition:
-        "A person who frequently creates and shares photo albums with others.",
+        "The reason the group chat has any photos at all. Shares albums, asks for nothing, deserves everything.",
   ),
   rust.RewindBadge.mainCharacter => (
     title: "MAIN\nCHARACTER",
     pronunciation: "/ˈmān ˈker-ik-tər/",
     definition:
-        "A person who appears in a significant proportion of their own photos.",
+        "The star of their own story, and what a story it was. Every scene was better with them in it.",
   ),
   rust.RewindBadge.earlyBird => (
     title: "EARLY BIRD",
     pronunciation: "/ˈər-lē ˈbərd/",
     definition:
-        "A person who frequently takes photos during the early morning hours.",
+        "Someone who’s caught a sunrise, a coffee and a whole adventure before your alarm goes off.",
   ),
   rust.RewindBadge.nightOwl => (
     title: "NIGHT OWL",
     pronunciation: "/ˈnīt ˌau̇l/",
-    definition: "A person who frequently takes photos after dark.",
+    definition:
+        "Someone who comes alive after dark. Their camera roll has a nightlife, and it’s thriving.",
   ),
   rust.RewindBadge.weekendStar => (
     title: "WEEKEND STAR",
     pronunciation: "/ˈwēk-end ˈstär/",
-    definition: "A person who takes most of their photos on weekends.",
+    definition:
+        "Someone who saves their best material for the weekend. Monday to Friday is just rehearsal.",
   ),
   rust.RewindBadge.pawparazzi => (
     title: "PAWPARAZZI",
     pronunciation: "/ˌpȯ-pə-ˈrät-sē/",
     definition:
-        "A person whose photo collection contains a high proportion of pet photographs.",
+        "Someone whose pet has had more photoshoots than most celebrities. Every yawn is a cover shot.",
   ),
   rust.RewindBadge.foodie => (
     title: "FOODIE",
     pronunciation: "/ˈfü-dē/",
     definition:
-        "A person who frequently photographs food, meals, and dining experiences.",
+        "Someone whose phone always eats first. Every meal gets a photoshoot, and every meal deserves one.",
   ),
   rust.RewindBadge.plantParent => (
     title: "PLANT PARENT",
     pronunciation: "/ˈplant ˌper-ənt/",
     definition:
-        "A person who regularly photographs plants, flowers, and other botanical subjects.",
+        "Someone who has never walked past a pretty flower without saying hi. Proud parent to every leaf they meet.",
   ),
   rust.RewindBadge.buildingBuff => (
     title: "BUILDING BUFF",
     pronunciation: "/ˈbil-diŋ ˈbəf/",
     definition:
-        "A person who frequently photographs buildings, architecture, and structural details.",
+        "Someone who looks up while everyone else looks down. Never met a cool doorway they didn’t photograph.",
   ),
   rust.RewindBadge.screenshotCollector => (
     title: "SCREENSHOT\nCOLLECTOR",
     pronunciation: "/ˈskrēn-ˌshät kə-ˈlek-tər/",
     definition:
-        "A person who regularly saves screenshots of information, conversations, images, and other digital content.",
+        "The keeper of receipts, recipes and everything worth remembering. If it was on a screen, it’s safe with them.",
   ),
   rust.RewindBadge.hobbyHopper => (
     title: "HOBBY HOPPER",
     pronunciation: "/ˈhä-bē ˈhä-pər/",
     definition:
-        "A person whose photographs reflect a variety of hobbies and interests over time.",
+        "Someone with a new passion every season and the photos to prove it. Jack of all trades, master of fun.",
   ),
   rust.RewindBadge.indoorKid => (
     title: "INDOOR KID",
     pronunciation: "/ˈin-dȯr ˈkid/",
-    definition: "A person who takes most of their photographs indoors.",
+    definition:
+        "Someone who has mastered the art of cozy. The best moments happen at home, with the best people.",
   ),
   rust.RewindBadge.outOfOffice => (
     title: "OUT OF OFFICE",
     pronunciation: "/ˈau̇t əv ˈȯ-fəs/",
     definition:
-        "A person who frequently photographs travel, outings, and visits to different places.",
+        "Someone whose auto-reply did a lot of work this year. Home is wherever the next adventure is.",
   ),
   rust.RewindBadge.fullThrottle => (
     title: "FULL THROTTLE",
     pronunciation: "/ˈfu̇l ˈthrä-tᵊl/",
     definition:
-        "A person who regularly captures sports, exercise, and other physical activities.",
+        "Someone who doesn’t do “sit still”. If there’s a game, a trail or a finish line, they’re in it.",
   ),
   rust.RewindBadge.eventHopper => (
     title: "EVENT HOPPER",
     pronunciation: "/i-ˈvent ˈhä-pər/",
     definition:
-        "A person who frequently photographs parties, concerts, festivals, celebrations, and other events.",
+        "The friend with the best calendar. Concerts, parties, festivals. If it was happening, they were there.",
   ),
   rust.RewindBadge.alwaysRolling => (
     title: "ALWAYS\nROLLING",
     pronunciation: "/ˈȯl-wāz ˈrō-liŋ/",
     definition:
-        "A person who frequently records videos rather than taking still photographs.",
+        "Someone who doesn’t take photos, they take scenes. Hit record first, ask questions later.",
   ),
   rust.RewindBadge.fitCheck => (
     title: "FIT CHECK",
     pronunciation: "/ˈfit ˌchek/",
     definition:
-        "A person who regularly photographs clothing, outfits, footwear, and accessories.",
+        "Someone who never wastes a good outfit. Every look gets documented, and every look deserves to be.",
   ),
   rust.RewindBadge.artLover => (
     title: "ART LOVER",
     pronunciation: "/ˈärt ˈlə-vər/",
     definition:
-        "A person who frequently photographs paintings, sculptures, murals, and other forms of art.",
+        "Someone who can’t walk past a mural without stopping. Turns every gallery and street corner into a date.",
   ),
   rust.RewindBadge.limitedEdition => (
     title: "LIMITED\nEDITION",
     pronunciation: "/ˈli-mə-təd i-ˈdi-shən/",
     definition:
-        "A person who takes relatively few photos, spread across a substantial part of the year.",
+        "Someone who doesn’t snap everything, just the good stuff. Rare, hand-picked and worth every frame.",
   ),
   rust.RewindBadge.happySnapper => (
     title: "HAPPY SNAPPER",
     pronunciation: "/ˈha-pē ˈsna-pər/",
     definition:
-        "A person who takes many photos across a wide variety of subjects, without a single dominant interest.",
+        "Someone who photographs everything, because everything is worth it. No theme, no rules, all joy.",
   ),
   rust.RewindBadge.openingCredits => (
     title: "OPENING\nCREDITS",
     pronunciation: "/ˈō-pə-niŋ ˈkre-dits/",
     definition:
-        "A person whose available photo history covers only a short period of time.",
+        "Someone whose story is just getting started. If this is the opening scene, the rest is going to be epic.",
   ),
   rust.RewindBadge.guestStar => (
     title: "GUEST STAR",
     pronunciation: "/ˈgest ˌstär/",
     definition:
-        "A person who takes photos in occasional bursts, with extended periods of little or no activity.",
+        "Someone who doesn’t show up often, but when they do, they steal the show. Every appearance is an event.",
   ),
   rust.RewindBadge.mixedBag => (
     title: "MIXED BAG",
     pronunciation: "/ˈmikst ˈbag/",
     definition:
-        "A person whose photo collection does not show a clearly dominant pattern or contains insufficient information to identify one.",
+        "Someone who can’t be put in a box. A little bit of everything, a whole lot of personality.",
   ),
 };
 
@@ -167,10 +174,14 @@ class BadgeRevealPage extends RewindPage {
   const BadgeRevealPage(this.badge);
 
   static const backdrop = RewindBackdrop(
-    color: Color(0xFF000000),
-    pattern: RewindRays(Color(0xFF070707)),
+    color: Color(0xFF1A1A1A),
+    pattern: RewindRays(Color(0xFF232323), center: Offset(195, 354)),
   );
-  static const _badgeCenter = Offset(195, 326);
+  static const _badgeCenter = Offset(195, 378.3);
+  static const _sparkles = [
+    (RewindAssets.topBadgeSparkle, Offset(318, 217), 900),
+    (RewindAssets.bottomBadgeSparkle, Offset(25, 502), 1050),
+  ];
 
   final rust.Badge badge;
 
@@ -205,9 +216,46 @@ class BadgeRevealPage extends RewindPage {
             children: [
               Positioned.fromRect(
                 rect: Rect.fromCenter(
+                  center: const Offset(195, 376),
+                  width: 280,
+                  height: 380,
+                ),
+                child: RewindLeave(
+                  position: position,
+                  centerY: 376,
+                  child: RewindEntrance(
+                    preset: RewindPreset.fadeIn,
+                    active: isActive,
+                    delayMs: 200,
+                    child: const CustomPaint(painter: _GlowPainter()),
+                  ),
+                ),
+              ),
+              for (final (asset, at, delayMs) in _sparkles)
+                Positioned(
+                  left: at.dx,
+                  top: at.dy,
+                  child: RewindLeave(
+                    position: position,
+                    centerY: at.dy,
+                    child: RewindEntrance(
+                      preset: RewindPreset.twinkle,
+                      active: isActive,
+                      delayMs: delayMs,
+                      child: RewindIdleLoop(
+                        idle: RewindIdle.twinkle,
+                        active: isActive,
+                        delayMs: delayMs + 900,
+                        child: RewindSvg(asset),
+                      ),
+                    ),
+                  ),
+                ),
+              Positioned.fromRect(
+                rect: Rect.fromCenter(
                   center: _badgeCenter,
-                  width: 290,
-                  height: 364,
+                  width: 304,
+                  height: 382,
                 ),
                 child: RewindLeave(
                   position: position,
@@ -217,9 +265,50 @@ class BadgeRevealPage extends RewindPage {
                     button: true,
                     hint: "Double tap to flip it again",
                     child: OverflowBox(
-                      maxWidth: 522,
-                      maxHeight: 580,
+                      maxWidth: 547.4,
+                      maxHeight: 608.2,
                       child: RewindBadge(badge: trigger, active: isActive),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 33,
+                top: 109,
+                width: 324,
+                child: Builder(
+                  builder: (context) => Visibility(
+                    visible: RewindShareable.capturing(context),
+                    maintainState: true,
+                    maintainAnimation: true,
+                    maintainSize: true,
+                    child: RewindLeave(
+                      position: position,
+                      centerY: 141,
+                      child: Semantics(
+                        header: true,
+                        label: "What my photos say about me",
+                        child: ExcludeSemantics(
+                          child: RewindEntrance(
+                            preset: RewindPreset.rise,
+                            active: isActive,
+                            child: RewindFitWidth(
+                              width: 324,
+                              alignment: Alignment.topCenter,
+                              child: Text(
+                                "WHAT MY PHOTOS\nSAY ABOUT ME",
+                                textAlign: TextAlign.center,
+                                style: RewindTextStyles.display(
+                                  26,
+                                  color: RewindColors.white,
+                                  height: 1,
+                                  letterSpacing: 0.52,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -258,7 +347,7 @@ class BadgeRevealPage extends RewindPage {
 class _PlaqueLayout extends SingleChildLayoutDelegate {
   const _PlaqueLayout({required this.bottom});
 
-  static const _top = 584.0;
+  static const _top = 609.0;
 
   final double bottom;
 
@@ -326,11 +415,27 @@ class _Plaque extends StatelessWidget {
   }
 }
 
+class _GlowPainter extends CustomPainter {
+  const _GlowPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawOval(
+      Offset.zero & size,
+      Paint()
+        ..color = RewindColors.white.withValues(alpha: 0.2)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 64.4),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_GlowPainter oldDelegate) => false;
+}
+
 class _PlaquePainter extends CustomPainter {
   const _PlaquePainter();
 
   static const _gold = Color(0xFFFFCA39);
-  static const _screwInk = Color(0xFF1E1E1E);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -358,18 +463,6 @@ class _PlaquePainter extends CustomPainter {
         ..strokeWidth = 3
         ..strokeJoin = StrokeJoin.round,
     );
-    for (final x in [17.0, w - 17]) {
-      final screw = Offset(x, h / 2 - 1.5);
-      canvas.drawCircle(screw, 4.25, Paint()..color = _gold);
-      canvas.drawCircle(
-        screw,
-        4.25,
-        Paint()
-          ..color = _screwInk
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
-      );
-    }
   }
 
   @override
